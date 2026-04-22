@@ -51,7 +51,7 @@ class BaseNeuron:
         self.tokenizer = None
         self.model = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        
+        print(self.device)
         if not self.model_path:
             raise ValueError(f"No model path configured for neuron {neuron_id}")
     

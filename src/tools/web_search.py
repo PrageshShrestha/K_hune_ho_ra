@@ -18,12 +18,17 @@ class WebSearcher:
         self.timeout = config.search_timeout
     
     def search(self, query: str, max_results: int = None) -> List[Dict]:
-        """Search the web and return results"""
+        """Search web and return results"""
         max_results = max_results or self.max_results
         
         try:
-            results = list(self.ddgs.text(query, max_results=max_results))
-            return [
+            # Try with backend='news' for better reliability
+            results = list(self.ddgs.text(query, max_results=max_results, backend='news'))
+            if not results:
+                # Fallback to default backend
+                results = list(self.ddgs.text(query, max_results=max_results))
+            print(results , query)
+            var1 = [
                 {
                     "title": r["title"],
                     "snippet": r["body"],
@@ -32,8 +37,18 @@ class WebSearcher:
                 }
                 for r in results
             ]
+            print("var 1 is " + str(var1))
+            return var1
         except Exception as e:
-            return [{"error": str(e), "source": "none"}]
+            # Return fallback results if search fails
+            return [
+                {
+                    "title": f"Search results for: {query}",
+                    "snippet": f"Unable to fetch live search results for: {query}",
+                    "url": f"https://duckduckgo.com/?q={query.replace(' ', '+')}",
+                    "source": "fallback"
+                }
+            ][:max_results or self.max_results]
     
     def search_news(self, topic: str, days_back: int = 7) -> List[Dict]:
         """Search recent news only"""
