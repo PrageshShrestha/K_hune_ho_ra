@@ -2,7 +2,6 @@
 Main Entry Point for KHUNEHO? Neural Analysis System
 """
 import sys
-import asyncio
 from pathlib import Path
 
 # Add src to path

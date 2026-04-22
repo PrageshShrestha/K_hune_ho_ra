@@ -26,6 +26,35 @@ class KhunehoOrchestrator:
         self.conversation_history = []
         self.system_name = config.system_name
         self.show_progress = config.show_progress
+        
+        # Pre-load all models at startup
+        if self.show_progress:
+            print("Pre-loading all neural models...")
+        self._preload_models()
+        if self.show_progress:
+            print("All models loaded and ready!\n")
+    
+    def _preload_models(self):
+        """Pre-load all models to avoid loading during analysis"""
+        self.preloaded_models = {}
+        
+        for neuron_id, NeuronClass in NEURON_REGISTRY.items():
+            if self.show_progress:
+                print(f"  Loading {neuron_id}...", end=" ", flush=True)
+            
+            try:
+                neuron = NeuronClass()
+                neuron._load_model()
+                self.preloaded_models[neuron_id] = neuron
+                
+                if self.show_progress:
+                    print("✓")
+                    
+            except Exception as e:
+                if self.show_progress:
+                    print(f"✗ ({str(e)[:30]})")
+                # Create a dummy neuron for failed loads
+                self.preloaded_models[neuron_id] = None
     
     async def analyze(self, event_text: str) -> Dict[str, Any]:
         """
@@ -39,30 +68,43 @@ class KhunehoOrchestrator:
             print("[1/3] Gathering web intelligence...")
         web_context = self.searcher.search_context(event_text)
         
-        # Step 2: Run each neuron sequentially
+        # Step 2: Run each neuron using pre-loaded models
         if self.show_progress:
-            print("[2/3] Activating neural cluster...")
+            print("[2/3] Running neural analysis...")
         neuron_reports = {}
         
-        for neuron_id, NeuronClass in NEURON_REGISTRY.items():
+        for neuron_id in NEURON_REGISTRY.keys():
             if self.show_progress:
                 print(f"    - {neuron_id}...", end=" ", flush=True)
             
-            # Define loader function
-            def loader():
-                neuron = NeuronClass()
-                neuron._load_model()
-                return neuron
-            
             try:
-                # Load, run, unload
-                with self.vram.load(neuron_id, loader) as neuron:
-                    report = neuron.forward(event_text, context=str(web_context)[:1000])
-                    # Add neuron-specific web sources
-                    neuron_sources = self.searcher.search_for_neuron(event_text, neuron_id)
-                    report.web_sources = neuron_sources[:3]
-                    report.search_queries = [f"{event_text} {neuron_id}"]
-                    neuron_reports[neuron_id] = report
+                # Use pre-loaded neuron
+                neuron = self.preloaded_models.get(neuron_id)
+                
+                if neuron is None:
+                    # Handle failed pre-load
+                    dummy_report = NeuronReport(
+                        neuron_id=neuron_id,
+                        timestamp=datetime.now(),
+                        confidence=0.0,
+                        logits=[0.0],
+                        predicted_class=0,
+                        class_labels=[],
+                        reasoning="Model failed to load during initialization"
+                    )
+                    neuron_reports[neuron_id] = dummy_report
+                    if self.show_progress:
+                        print("not loaded")
+                    continue
+                
+                # Run analysis with pre-loaded model
+                report = neuron.forward(event_text, context=str(web_context)[:1000])
+                
+                # Add neuron-specific web sources
+                neuron_sources = self.searcher.search_for_neuron(event_text, neuron_id)
+                report.web_sources = neuron_sources[:3]
+                report.search_queries = [f"{event_text} {neuron_id}"]
+                neuron_reports[neuron_id] = report
                 
                 if self.show_progress:
                     print(f"done (conf: {report.confidence:.2f})")

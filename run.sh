@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # KHUNEHO? Neural Analysis System - Run Script
-# This script sets up the environment and runs the system
+# This script uses the nirmitbatabaran environment and runs the system
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$PROJECT_DIR"
 
 echo "=========================================="
 echo "KHUNEHO? Neural Analysis System"
+echo "Using nirmitbatabaran environment"
 echo "=========================================="
 
 # Check Python
@@ -16,18 +17,19 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Virtual environment
-if [ ! -d "venv" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv venv
+# Check nirmitbatabaran environment
+if [ ! -d "nirmitbatabaran" ]; then
+    echo "Error: nirmitbatabaran environment not found"
+    exit 1
 fi
 
-echo "Activating virtual environment..."
-source venv/bin/activate
+echo "Activating nirmitbatabaran environment..."
+source nirmitbatabaran/bin/activate
 
-# Install dependencies
-echo "Installing dependencies..."
-pip install -q torch transformers duckduckgo-search python-dotenv
+# Check if models directory exists
+if [ ! -d "models" ]; then
+    echo "Warning: models directory not found. Some models may need to be downloaded."
+fi
 
 # Check if .env exists
 if [ ! -f ".env" ]; then

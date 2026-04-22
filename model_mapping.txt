@@ -1,0 +1,18 @@
+# KHUNEHO? Model Mapping
+# Domain -> Model Name
+
+sentiment=nlptown/bert-base-multilingual-uncased-sentiment
+financial=ProsusAI/finbert
+geopolitical=jinaai/jina-embeddings-v3
+legal=nlpaueb/legal-bert-base-uncased
+technological=Qwen/Qwen2.5-1.5B-Instruct
+social=cardiffnlp/twitter-roberta-base-sentiment-latest
+environmental=climatebert/distilroberta-base-climate-sentiment
+health=dmis-lab/biobert-base-cased-v1.1
+military=meta-llama/Llama-3.1-8B-Instruct
+economic=microsoft/DialoGPT-medium
+cultural=xlm-roberta-base
+ethical=microsoft/deberta-v3-base
+strategic=TinyLlama/TinyLlama-1.1B-Chat-v1.0
+historical=sentence-transformers/all-MiniLM-L6-v2
+predictive=distilbert-base-uncased

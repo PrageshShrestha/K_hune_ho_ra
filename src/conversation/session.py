@@ -5,7 +5,7 @@ Clean terminal interface without emojis
 import sys
 from datetime import datetime
 from typing import Dict, List
-
+import asyncio
 from ..core.config import config
 
 class ConversationSession:
