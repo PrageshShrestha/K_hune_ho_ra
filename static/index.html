@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Neuron AI Chat System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .message-content {
+            line-height: 1.6;
+        }
+        .message-content h1 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em 0; }
+        .message-content h2 { font-size: 1.3em; font-weight: bold; margin: 0.8em 0 0.4em 0; }
+        .message-content h3 { font-size: 1.1em; font-weight: bold; margin: 0.6em 0 0.3em 0; }
+        .message-content ul { margin: 0.5em 0; padding-left: 1.5em; }
+        .message-content li { margin: 0.2em 0; }
+        .message-content strong { font-weight: 600; }
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #6b7280;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #555; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white shadow-lg border-r border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="brain" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-gray-900">Multi-Neuron AI</h1>
+                        <p class="text-sm text-gray-500">15-Domain Analysis</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="px-6 pb-6">
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">System Status</span>
+                        <span id="system-status" class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">Checking...</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">Models</span>
+                        <span id="models-status" class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">Unknown</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="px-6 pb-6">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">Active Neurons</h3>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="flex items-center space-x-1">
+                        <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                        <span>Economic</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                        <span>Geopolitical</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                        <span>Technological</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                        <span>Ethical</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                        <span>Predictive</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                        <span>Environmental</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="px-6 pb-6">
+                <button onclick="clearChat()" class="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium">
+                    Clear Chat
+                </button>
+            </div>
+        </div>
+        
+        <!-- Main Chat Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- Header -->
+            <div class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900">Real-Time News Reasoning</h2>
+                        <p class="text-sm text-gray-500">Ask questions about current events, scenarios, or predictions</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-sm text-gray-500">
+                            <span id="processing-time"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Messages Container -->
+            <div id="messages-container" class="flex-1 overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin">
+                <div class="flex justify-center">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 max-w-md">
+                        <p class="text-sm text-blue-800">
+                            <strong>Welcome!</strong> Ask me anything about current events, scenarios, or predictions. I'll analyze it across 15 specialized domains using real-time news.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input Area -->
+            <div class="border-t border-gray-200 bg-white px-6 py-4">
+                <div class="flex space-x-4">
+                    <textarea 
+                        id="chat-input" 
+                        placeholder="Ask about current events, scenarios, or predictions..."
+                        class="flex-1 resize-none border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        rows="3"
+                    ></textarea>
+                    <div class="flex flex-col space-y-2">
+                        <button 
+                            onclick="sendMessage()" 
+                            id="send-button"
+                            class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                            <span>Analyze</span>
+                        </button>
+                        <div class="text-xs text-gray-500 text-center">
+                            <span id="char-count">0</span>/1000
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Global variables
+        let isProcessing = false;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSystemHealth();
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            const input = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+            
+            // Character counter
+            input.addEventListener('input', function() {
+                const count = this.value.length;
+                document.getElementById('char-count').textContent = count;
+                
+                if (count > 1000) {
+                    this.value = this.value.substring(0, 1000);
+                    document.getElementById('char-count').textContent = 1000;
+                }
+            });
+            
+            // Enter to send (Shift+Enter for new line)
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+        
+        async function checkSystemHealth() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                
+                const statusElement = document.getElementById('system-status');
+                const modelsElement = document.getElementById('models-status');
+                
+                if (data.status === 'healthy') {
+                    statusElement.textContent = 'Healthy';
+                    statusElement.className = 'px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs';
+                } else {
+                    statusElement.textContent = 'Unhealthy';
+                    statusElement.className = 'px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs';
+                }
+                
+                if (data.models_loaded) {
+                    modelsElement.textContent = 'Ready';
+                    modelsElement.className = 'px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs';
+                } else {
+                    modelsElement.textContent = 'Not Loaded';
+                    modelsElement.className = 'px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs';
+                }
+                
+            } catch (error) {
+                console.error('Health check failed:', error);
+                document.getElementById('system-status').textContent = 'Error';
+                document.getElementById('system-status').className = 'px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs';
+            }
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+            const query = input.value.trim();
+            
+            if (!query || isProcessing) return;
+            
+            isProcessing = true;
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+            
+            // Add user message
+            addMessage('user', query);
+            input.value = '';
+            document.getElementById('char-count').textContent = '0';
+            
+            // Add processing message
+            const processingId = addMessage('assistant', 'Processing your query across 15 neural domains...', true);
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        max_news_articles: 5
+                    })
+                });
+                
+                const data = await response.json();
+                const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                
+                // Update processing message with actual response
+                updateMessage(processingId, data.response, false);
+                
+                // Update processing time display
+                document.getElementById('processing-time').textContent = `Processed in ${processingTime}s`;
+                
+                // Add confidence indicator
+                if (data.confidence) {
+                    const confidenceColor = data.confidence > 0.7 ? 'green' : data.confidence > 0.4 ? 'yellow' : 'red';
+                    addMessage('system', `Analysis confidence: ${Math.round(data.confidence * 100)}%`, false, confidenceColor);
+                }
+                
+            } catch (error) {
+                console.error('Chat request failed:', error);
+                updateMessage(processingId, 'Sorry, I encountered an error while processing your request. Please try again.', false);
+            } finally {
+                isProcessing = false;
+                sendButton.disabled = false;
+                sendButton.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i><span>Analyze</span>';
+                lucide.createIcons();
+            }
+        }
+        
+        function addMessage(role, content, isTyping = false, color = 'blue') {
+            const container = document.getElementById('messages-container');
+            const messageId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.id = messageId;
+            messageDiv.className = 'flex ' + (role === 'user' ? 'justify-end' : 'justify-start');
+            
+            const bubbleClass = role === 'user' 
+                ? 'bg-blue-600 text-white' 
+                : role === 'system'
+                ? `bg-${color}-50 border border-${color}-200 text-${color}-800`
+                : 'bg-white border border-gray-200 text-gray-900';
+            
+            const maxWidth = role === 'system' ? 'max-w-md' : 'max-w-3xl';
+            
+            messageDiv.innerHTML = `
+                <div class="${maxWidth} ${bubbleClass} rounded-lg px-4 py-3 shadow-sm">
+                    ${isTyping ? '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>' : `<div class="message-content">${content}</div>`}
+                </div>
+            `;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            return messageId;
+        }
+        
+        function updateMessage(messageId, content, isTyping = false) {
+            const messageDiv = document.getElementById(messageId);
+            if (messageDiv) {
+                const bubble = messageDiv.querySelector('div');
+                if (isTyping) {
+                    bubble.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+                } else {
+                    bubble.innerHTML = `<div class="message-content">${content}</div>`;
+                }
+            }
+        }
+        
+        function clearChat() {
+            const container = document.getElementById('messages-container');
+            container.innerHTML = `
+                <div class="flex justify-center">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 max-w-md">
+                        <p class="text-sm text-blue-800">
+                            <strong>Chat cleared!</strong> Ask me anything about current events, scenarios, or predictions.
+                        </p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('processing-time').textContent = '';
+        }
+        
+        // Health check every 30 seconds
+        setInterval(checkSystemHealth, 30000);
+    </script>
+</body>
+</html>
